@@ -1,34 +1,32 @@
-import asyncio
+import os
 import logging
 from aiogram import Bot, Dispatcher, types
 from aiogram.filters import Command
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
-from database import init_db, add_task
 
-# BotFather'dan olgan tokeningizni qo'shtirnoq ichiga yozasiz
-TOKEN = "SIZNING_TELEGRAM_BOT_TOKENINGIZ"
+# Loglarni yoqish (xatoliklarni ko'rib turish uchun)
+logging.basicConfig(level=logging.INFO)
 
+# Tokenni Render'dagi Environment (BOT_TOKEN) dan avtomatik oladi
+TOKEN = os.getenv("BOT_TOKEN")
+
+# Bot va Dispatcher yaratish
 bot = Bot(token=TOKEN)
 dp = Dispatcher()
+
+# Schedulerni sozlash (24/7 rejim va vaqtli vazifalar uchun)
 scheduler = AsyncIOScheduler()
 
+# /start buyrug'i kelganda ishlaydigan funksiya
 @dp.message(Command("start"))
 async def start_cmd(message: types.Message):
-    await message.answer("Salom! Men sizning shaxsiy yordamchingizman. Menga vazifangizni yozib yuboring.")
+    await message.answer("Assalomu alaykum! Botingiz muvaffaqiyatli ishga tushdi va 24/7 rejimida ishlamoqda. 🚀")
 
-@dp.message()
-async def handle_message(message: types.Message):
-    user_text = message.text
-    user_id = message.from_user.id
-    
-    add_task(user_id, user_text, "Ertaga")
-    await message.answer(f"✅ Vazifa qabul qilindi va bazaga saqlandi:\n👉 {user_text}")
-
+# Botni ishga tushiruvchi asosiy qism
 async def main():
-    init_db()
     scheduler.start()
     await dp.start_polling(bot)
 
-if __name__ == "__main__":
-    logging.basicConfig(level=logging.INFO)
+if name == "main":
+    import asyncio
     asyncio.run(main())
