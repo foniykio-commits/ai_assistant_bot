@@ -5,9 +5,9 @@ from aiogram import Bot, Dispatcher, types
 from aiogram.filters import Command
 from google import genai
 
-# Tokenlarni server muhitidan olish
+# Token va Gemini kaliti to'g'ridan-to'g'ri yozilgan toza kod
 BOT_TOKEN = os.getenv("BOT_TOKEN")
-GEMINI_KEY = os.getenv("GEMINI_API_KEY")
+GEMINI_KEY = "AQ.Ab8RN6IUHn7h_GeSchw3k52dHS_NuulF7n_xCMw6j9QClt6IjQ"
 
 bot = Bot(token=BOT_TOKEN)
 dp = Dispatcher()
