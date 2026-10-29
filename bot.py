@@ -1,42 +1,25 @@
 import asyncio
 import os
 import re
-import threading
-from http.server import HTTPServer, BaseHTTPRequestHandler
-import google.generativeai as genai
+from mistralai import Mistral
 from aiogram import Bot, Dispatcher, types
 from aiogram.filters import Command
 
-# 1. Render talab qiladigan minimal port-server
-class SimpleHandler(BaseHTTPRequestHandler):
-    def do_GET(self):
-        self.send_response(200)
-        self.end_headers()
-        self.wfile.write(b"OK")
-
-def run_server():
-    # Render avtomatik beradigan PORT ni oladi, bo'lmasa 10000 ni ishlatadi
-    port = int(os.environ.get("PORT", 10000))
-    server = HTTPServer(('0.0.0.0', port), SimpleHandler)
-    server.serve_forever()
-
-# Serverni fonda alohida ipda (thread) ishga tushirish
-threading.Thread(target=run_server, daemon=True).start()
-
-# 2. Telegram Bot va Gemini qismi
+# Telegram va Mistral kalitlari
 BOT_TOKEN = os.getenv("BOT_TOKEN")
-GEMINI_KEY = "AQ.Ab8RN6IUHn7h_GeSchw3k52dHS_NuulF7n_xCMw6j9QClt6IjQ"
+MISTRAL_API_KEY = "Mstrl_mSymMNOhOyltpvSuc7M88rfAmfY8QSDb_1lFu07"
+model_name = "mistral-small-latest"
 
 bot = Bot(token=BOT_TOKEN)
 dp = Dispatcher()
 
-genai.configure(api_key=GEMINI_KEY)
-model = genai.GenerativeModel('gemini-1.5-flash')
+# Mistral mijozini sozlash
+client = Mistral(api_key=MISTRAL_API_KEY)
 
 @dp.message(Command("start"))
 async def start_handler(message: types.Message):
     await message.answer(
-        "Assalomu alaykum! Men Gemini AI bilan ishlaydigan aqlli yordamchingizman. 🚀\n\n"
+        "Assalomu alaykum! Men Mistral AI bilan ishlaydigan aqlli yordamchingizman. 🚀\n\n"
         "Menga ixtiyoriy shaklda vaqt va eslatmani yozing, masalan:\n"
         "• 'Yarim soatdan keyin choy ichishni eslat'\n"
         "• '1 soat 15 minutdan keyin darsni boshla deb ayt'"
@@ -53,11 +36,20 @@ async def ai_reminder_handler(message: types.Message):
     Javobni FAQAT VA FAQAT mana bu formatda ber, hech qanday ortiqcha so'z yozma:
     SEKUND: [Jami sekundlar soni faqat raqamda]
     XABAR: [Eslatma matni]
+
+    Misol uchun:
+    Input: "yarim soatdan keyin kitob o'qishni eslat"
+    Output:
+    SEKUND: 1800
+    XABAR: Kitob o'qish vaqti bo'ldi!
     """
 
     try:
-        response = model.generate_content(prompt)
-        ai_out = response.text.strip()
+        response = client.chat.complete(
+            model=model_name,
+            messages=[{"role": "user", "content": prompt}]
+        )
+        ai_out = response.choices[0].message.content.strip()
         
         sec_match = re.search(r'SEKUND:\s*(\d+)', ai_out)
         msg_match = re.search(r'XABAR:\s*(.+)', ai_out)
@@ -71,10 +63,10 @@ async def ai_reminder_handler(message: types.Message):
             time_str = f"{minutes} minut " if minutes > 0 else ""
             time_str += f"{sec_rem} sekund" if sec_rem > 0 else ""
             
-            await message.answer(f"Tushundim! ⏳ {time_str.strip()}dan keyin eslataman.")
+            await message.answer(f"Tushundim! ⏳ **{time_str.strip()}**dan keyin eslataman.")
             
             await asyncio.sleep(seconds)
-            await message.answer(f"🔔 Eslatma: {note}")
+            await message.answer(f"🔔 **Eslatma:** {note}")
         else:
             await message.answer("Vaqtni aniqlay olmadim. Iltimos, vaqtni aniqroq yozib ko'ring.")
             
