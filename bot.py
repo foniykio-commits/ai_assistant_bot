@@ -7,29 +7,29 @@ import google.generativeai as genai
 from aiogram import Bot, Dispatcher, types
 from aiogram.filters import Command
 
-# Render port talab qilgani uchun kichik veb-server ochamiz
+# 1. Render talab qiladigan minimal port-server
 class SimpleHandler(BaseHTTPRequestHandler):
     def do_GET(self):
         self.send_response(200)
         self.end_headers()
-        self.wfile.write(b"Bot is alive!")
+        self.wfile.write(b"OK")
 
-def run_web_server():
-    port = int(os.getenv("PORT", 10000))
+def run_server():
+    # Render avtomatik beradigan PORT ni oladi, bo'lmasa 10000 ni ishlatadi
+    port = int(os.environ.get("PORT", 10000))
     server = HTTPServer(('0.0.0.0', port), SimpleHandler)
     server.serve_forever()
 
-# Veb-serverni fonda ishga tushiramiz
-threading.Thread(target=run_web_server, daemon=True).start()
+# Serverni fonda alohida ipda (thread) ishga tushirish
+threading.Thread(target=run_server, daemon=True).start()
 
-# Token va Gemini kaliti
+# 2. Telegram Bot va Gemini qismi
 BOT_TOKEN = os.getenv("BOT_TOKEN")
 GEMINI_KEY = "AQ.Ab8RN6IUHn7h_GeSchw3k52dHS_NuulF7n_xCMw6j9QClt6IjQ"
 
 bot = Bot(token=BOT_TOKEN)
 dp = Dispatcher()
 
-# Gemini'ni sozlash
 genai.configure(api_key=GEMINI_KEY)
 model = genai.GenerativeModel('gemini-1.5-flash')
 
@@ -39,8 +39,7 @@ async def start_handler(message: types.Message):
         "Assalomu alaykum! Men Gemini AI bilan ishlaydigan aqlli yordamchingizman. 🚀\n\n"
         "Menga ixtiyoriy shaklda vaqt va eslatmani yozing, masalan:\n"
         "• 'Yarim soatdan keyin choy ichishni eslat'\n"
-        "• '1 soat 15 minutdan keyin darsni boshla deb ayt'\n"
-        "• '45 sekunddan keyin xabar ber'"
+        "• '1 soat 15 minutdan keyin darsni boshla deb ayt'"
     )
 
 @dp.message()
@@ -54,12 +53,6 @@ async def ai_reminder_handler(message: types.Message):
     Javobni FAQAT VA FAQAT mana bu formatda ber, hech qanday ortiqcha so'z yozma:
     SEKUND: [Jami sekundlar soni faqat raqamda]
     XABAR: [Eslatma matni]
-
-    Misol uchun:
-    Input: "yarim soatdan keyin kitob o'qishni eslat"
-    Output:
-    SEKUND: 1800
-    XABAR: Kitob o'qish vaqti bo'ldi!
     """
 
     try:
