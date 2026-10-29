@@ -12,7 +12,7 @@ GEMINI_KEY = "AQ.Ab8RN6IUHn7h_GeSchw3k52dHS_NuulF7n_xCMw6j9QClt6IjQ"
 bot = Bot(token=BOT_TOKEN)
 dp = Dispatcher()
 
-# Gemini'ni sozlash
+# Gemini'ni sozlash (requirements.txt dagi google-generativeai uchun moslangan)
 genai.configure(api_key=GEMINI_KEY)
 model = genai.GenerativeModel('gemini-1.5-flash')
 
