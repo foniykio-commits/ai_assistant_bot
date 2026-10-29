@@ -1,3 +1,2 @@
 aiogram
-apscheduler
-requests
+google-genai
