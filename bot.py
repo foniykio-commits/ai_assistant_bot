@@ -1,9 +1,26 @@
 import asyncio
 import os
 import re
+import threading
+from http.server import HTTPServer, BaseHTTPRequestHandler
 import google.generativeai as genai
 from aiogram import Bot, Dispatcher, types
 from aiogram.filters import Command
+
+# Render port talab qilgani uchun kichik veb-server ochamiz
+class SimpleHandler(BaseHTTPRequestHandler):
+    def do_GET(self):
+        self.send_response(200)
+        self.end_headers()
+        self.wfile.write(b"Bot is alive!")
+
+def run_web_server():
+    port = int(os.getenv("PORT", 10000))
+    server = HTTPServer(('0.0.0.0', port), SimpleHandler)
+    server.serve_forever()
+
+# Veb-serverni fonda ishga tushiramiz
+threading.Thread(target=run_web_server, daemon=True).start()
 
 # Token va Gemini kaliti
 BOT_TOKEN = os.getenv("BOT_TOKEN")
@@ -12,7 +29,7 @@ GEMINI_KEY = "AQ.Ab8RN6IUHn7h_GeSchw3k52dHS_NuulF7n_xCMw6j9QClt6IjQ"
 bot = Bot(token=BOT_TOKEN)
 dp = Dispatcher()
 
-# Gemini'ni sozlash (requirements.txt dagi google-generativeai uchun moslangan)
+# Gemini'ni sozlash
 genai.configure(api_key=GEMINI_KEY)
 model = genai.GenerativeModel('gemini-1.5-flash')
 
@@ -46,7 +63,6 @@ async def ai_reminder_handler(message: types.Message):
     """
 
     try:
-        # AI orqali matnni tahlil qilish
         response = model.generate_content(prompt)
         ai_out = response.text.strip()
         
