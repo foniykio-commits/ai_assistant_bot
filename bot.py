@@ -1,18 +1,20 @@
 import asyncio
 import os
 import re
+import google.generativeai as genai
 from aiogram import Bot, Dispatcher, types
 from aiogram.filters import Command
-from google import genai
 
+# Token va Gemini kaliti
 BOT_TOKEN = os.getenv("BOT_TOKEN")
 GEMINI_KEY = "AQ.Ab8RN6IUHn7h_GeSchw3k52dHS_NuulF7n_xCMw6j9QClt6IjQ"
 
 bot = Bot(token=BOT_TOKEN)
 dp = Dispatcher()
 
-# Gemini mijozini yaratish
-client = genai.Client(api_key=GEMINI_KEY)
+# Gemini'ni sozlash
+genai.configure(api_key=GEMINI_KEY)
+model = genai.GenerativeModel('gemini-1.5-flash')
 
 @dp.message(Command("start"))
 async def start_handler(message: types.Message):
@@ -44,11 +46,8 @@ async def ai_reminder_handler(message: types.Message):
     """
 
     try:
-        # Eng barqaror model nomidan foydalanamiz
-        response = client.models.generate_content(
-            model='gemini-1.5-flash',
-            contents=prompt,
-        )
+        # AI orqali matnni tahlil qilish
+        response = model.generate_content(prompt)
         ai_out = response.text.strip()
         
         sec_match = re.search(r'SEKUND:\s*(\d+)', ai_out)
@@ -68,11 +67,10 @@ async def ai_reminder_handler(message: types.Message):
             await asyncio.sleep(seconds)
             await message.answer(f"🔔 Eslatma: {note}")
         else:
-            await message.answer(f"AI javobidan vaqtni o'qib bo'lmadi. AI javobi: {ai_out}")
+            await message.answer("Vaqtni aniqlay olmadim. Iltimos, vaqtni aniqroq yozib ko'ring.")
             
     except Exception as e:
-        # Endi xatolikning aniq sababini Telegramga yozib yuboradi
-        await message.answer(f"ANIQ XATOLIK: {str(e)}")
+        await message.answer(f"Xatolik yuz berdi: {str(e)}")
 
 async def main():
     await dp.start_polling(bot)
