@@ -5,7 +5,6 @@ from aiogram import Bot, Dispatcher, types
 from aiogram.filters import Command
 from google import genai
 
-# Token va Gemini kaliti to'g'ridan-to'g'ri yozilgan toza kod
 BOT_TOKEN = os.getenv("BOT_TOKEN")
 GEMINI_KEY = "AQ.Ab8RN6IUHn7h_GeSchw3k52dHS_NuulF7n_xCMw6j9QClt6IjQ"
 
@@ -29,7 +28,6 @@ async def start_handler(message: types.Message):
 async def ai_reminder_handler(message: types.Message):
     user_text = message.text
     
-    # Gemini AI ga beriladigan ko'rsatma (Prompt)
     prompt = f"""
     Senga foydalanuvchi quyidagi matnni yozdi: "{user_text}"
     Sening vazifang ushbu matndan foydalanuvchi qancha VAQT (sekundlarda) kutmoqchi ekanligini va qanday ESLATMA xabari qoldirganini aniqlash.
@@ -46,14 +44,13 @@ async def ai_reminder_handler(message: types.Message):
     """
 
     try:
-        # AI orqali matnni tahlil qilish
+        # Eng barqaror model nomidan foydalanamiz
         response = client.models.generate_content(
-            model='gemini-2.5-flash',
+            model='gemini-1.5-flash',
             contents=prompt,
         )
         ai_out = response.text.strip()
         
-        # AI javobidan sekund va xabarni ajratib olish
         sec_match = re.search(r'SEKUND:\s*(\d+)', ai_out)
         msg_match = re.search(r'XABAR:\s*(.+)', ai_out)
         
@@ -68,14 +65,14 @@ async def ai_reminder_handler(message: types.Message):
             
             await message.answer(f"Tushundim! ⏳ {time_str.strip()}dan keyin eslataman.")
             
-            # Kutilgan vaqtcha kutish
             await asyncio.sleep(seconds)
             await message.answer(f"🔔 Eslatma: {note}")
         else:
-            await message.answer("Vaqtni aniqlay olmadim. Iltimos, vaqtni aniqroq yozib ko'ring.")
+            await message.answer(f"AI javobidan vaqtni o'qib bo'lmadi. AI javobi: {ai_out}")
             
     except Exception as e:
-        await message.answer("Xatolik yuz berdi. Qaytadan urinib ko'ring.")
+        # Endi xatolikning aniq sababini Telegramga yozib yuboradi
+        await message.answer(f"ANIQ XATOLIK: {str(e)}")
 
 async def main():
     await dp.start_polling(bot)
